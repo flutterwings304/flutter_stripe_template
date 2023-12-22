@@ -53,19 +53,21 @@ class _HomeScreenState extends State<Payment> {
 
   Future<void> makePayment() async {
     try {
-      paymentIntent = await createPaymentIntent('10', 'USD');
+      paymentIntent = await createPaymentIntent('10', 'INR');
       await Stripe.instance.initPaymentSheet(
-        paymentSheetParameters: const SetupPaymentSheetParameters(
-          paymentIntentClientSecret:
-              'sk_test_51JFH9zSGTdxZA1VV3MtP5wDpatKDerB7R6gdV2Vk4h5Qs6AMpng9Yke15xZzDQveyqt8NFPQ36pAiEgAfn8x5nNh00i7PPFMej',
-          googlePay: PaymentSheetGooglePay(
-              testEnv: true, currencyCode: "USD", merchantCountryCode: "DE"),
-          style: ThemeMode.dark,
+        paymentSheetParameters: SetupPaymentSheetParameters(
+
+          paymentIntentClientSecret: paymentIntent!['client_secret'],
+          googlePay: const PaymentSheetGooglePay(
+              testEnv: true, currencyCode: "USD", merchantCountryCode: "IN"),
           merchantDisplayName: 'anjali',
+          customerEphemeralKeySecret: paymentIntent!['ephemeralKey'],
+         returnURL: 'flutterstripe://redirect',
         ),
       );
       displayPaymentSheet();
     } catch (e) {
+      print("exception $e");
       if (kDebugMode) {
         if (e is StripeConfigException) {
           print("Stripe exception ${e.message}");
@@ -78,7 +80,9 @@ class _HomeScreenState extends State<Payment> {
 
   displayPaymentSheet() async {
     try {
+      print("Display payment sheet");
       await Stripe.instance.presentPaymentSheet();
+      print("Displayed successfully");
       // showDialog(
       //   context: context,
       //   builder: (_) => const AlertDialog(
@@ -95,12 +99,14 @@ class _HomeScreenState extends State<Payment> {
       //     ),
       //   ),
       // );
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Paid successfully")),
       );
       paymentIntent = null;
     } on StripeException catch (e) {
       print('Error: $e');
+
       showDialog(
         context: context,
         builder: (_) => const AlertDialog(
@@ -108,6 +114,7 @@ class _HomeScreenState extends State<Payment> {
         ),
       );
     } catch (e) {
+      print("Error in displaying");
       print('$e');
     }
   }
